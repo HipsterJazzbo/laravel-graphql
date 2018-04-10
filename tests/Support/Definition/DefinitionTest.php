@@ -86,6 +86,7 @@ class DefinitionTest extends TestCase {
 			$this->assertArrayHasKey('drop', $definition->transformers);
 			$this->assertArrayHasKey('store', $definition->transformers);
 			$this->assertArrayHasKey('batch', $definition->transformers);
+            $this->assertArrayHasKey('search', $definition->transformers);
 		});
 
 		$this->specify('ensure getTransformers method return all $transformers elements', function () use ($definition) {

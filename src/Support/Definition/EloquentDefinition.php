@@ -21,6 +21,7 @@ abstract class EloquentDefinition extends Definition {
 		'store' => \StudioNet\GraphQL\Support\Transformer\Eloquent\StoreTransformer::class,
 		'batch' => \StudioNet\GraphQL\Support\Transformer\Eloquent\BatchTransformer::class,
 		'restore' => \StudioNet\GraphQL\Support\Transformer\Eloquent\RestoreTransformer::class,
+        'search' => \StudioNet\GraphQL\Support\Transformer\Eloquent\SearchTransformer::class,
 	];
 
 	/**
@@ -35,7 +36,8 @@ abstract class EloquentDefinition extends Definition {
 			'drop' => true,
 			'store' => true,
 			'batch' => true,
-			'restore' => in_array(SoftDeletes::class, class_uses($this->getSource()))
+			'restore' => in_array(SoftDeletes::class, class_uses($this->getSource())),
+            'search' => in_array('Laravel\\Scout\\Searchable', class_uses($this->getSource()))
 		];
 	}
 

@@ -180,7 +180,7 @@ class GraphQL {
 
 		return new ObjectType([
 			'name' => 'Query',
-			'fields' => $this->applyTransformers(['list', 'view'], $data)
+			'fields' => $this->applyTransformers(['list', 'view', 'search'], $data)
 		]);
 	}
 
