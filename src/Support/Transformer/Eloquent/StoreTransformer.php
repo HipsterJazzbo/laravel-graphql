@@ -118,7 +118,7 @@ class StoreTransformer extends Transformer {
 
 		$this->validate($data, $opts['rules']);
 		$model->fill($data);
-
+		$syncLater = [];
 		foreach ($relationInput as $column => $values) {
 			if (empty($values)) {
 				// TODO: check if it's pertinent
@@ -149,25 +149,25 @@ class StoreTransformer extends Transformer {
 					default:
 						$relation->save($dep);
 				}
-			} else if ($relationType === Relations\MorphTo::class) {
+			} elseif ($relationType === Relations\MorphTo::class) {
 				$id = array_get($values, 'id', null);
 				$type = array_get($values, '__typename', null);
 
 				if (is_null($type)) {
-					throw new Exception(
-						"Can't update polymorphic relation without specify type");
+					throw new \Exception(
+						"Can't update polymorphic relation without specify type"
+					);
 				}
 
 				// TODO: maybe there is a smarter way to guess type
 				$className = '\App\\' . $type;
 				if (!class_exists($className)) {
-					throw new Exception("Unknown $className type");
+					throw new \Exception("Unknown $className type");
 				}
 
 				$dep = $className::findOrNew($id);
 				$dep->fill($values)->save();
 				$relation->associate($dep);
-
 			} else {
 				if (!is_array(array_first($values))) {
 					$values = [$values];
@@ -179,9 +179,14 @@ class StoreTransformer extends Transformer {
 					}, $values);
 
 					$relation = $model->{$column}();
-					$relation->sync(array_filter($toKeep, function ($value) {
-						return !is_null($value);
-					}));
+					// Do the sync after model save, 'coz if model doesn't exist
+					// in DB yet, it will result with a NOT NULL error in pivot table
+					$syncLater[] = [
+						"relation" => $relation,
+						"values" => array_filter($toKeep, function ($value) {
+							return !is_null($value);
+						})
+					];
 				} else {
 					// For each relationship, find or new by id and fill with data
 					foreach ($values as $value) {
@@ -204,6 +209,11 @@ class StoreTransformer extends Transformer {
 		}
 
 		$model->save();
+
+		// Sync relations which need to be synced after save
+		foreach ($syncLater as $sync) {
+			$sync["relation"]->sync($sync["values"]);
+		}
 
 		// Apply post-save callBacks
 		foreach ($savedCallbacks as $callBack) {
